@@ -80,7 +80,7 @@ public class Principal {
             System.out.println("Ingrese el nombre del libro que desea buscar");
             opcionLibro=teclado.nextLine();
 
-                var JsonBusqueda = consumoAPI.obtenerDatos(URL_BASE+"?search="+opcionLibro);
+                var JsonBusqueda = consumoAPI.obtenerDatos(URL_BASE+"?search="+opcionLibro.replace(" ","+"));
                 var datosBusqueda = conversor.obtenerDatos(JsonBusqueda, DatosResultados.class);
                     Optional<DatosLibro> libroBuscado = datosBusqueda.resultado().stream()
                             .filter(l -> l.titulo().toUpperCase().contains(opcionLibro.toUpperCase()))
