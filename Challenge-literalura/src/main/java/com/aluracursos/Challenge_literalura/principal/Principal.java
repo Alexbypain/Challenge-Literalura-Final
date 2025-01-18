@@ -1,18 +1,24 @@
 package com.aluracursos.Challenge_literalura.principal;
 
-import com.aluracursos.Challenge_literalura.model.Autor;
-import com.aluracursos.Challenge_literalura.model.DatosLibro;
-import com.aluracursos.Challenge_literalura.model.DatosResultados;
-import com.aluracursos.Challenge_literalura.model.Libro;
+import com.aluracursos.Challenge_literalura.model.*;
 import com.aluracursos.Challenge_literalura.repository.AutorRepository;
 import com.aluracursos.Challenge_literalura.repository.LibroRepository;
 import com.aluracursos.Challenge_literalura.service.ConsumoAPI;
 import com.aluracursos.Challenge_literalura.service.ConvierteDatos;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
-
+@Service
 public class Principal {
+
+    @PersistenceContext
+    private EntityManager entityManager;
     private ConsumoAPI consumoAPI=new ConsumoAPI();
     private final String URL_BASE ="https://gutendex.com/books/";
     private ConvierteDatos conversor=new ConvierteDatos();
@@ -66,6 +72,8 @@ public class Principal {
                    var opcionIdioma=teclado.nextLine();
                    listarLibrosPorIdioma(opcionIdioma);
                    break;
+               case 0:
+                   break;
 
                 default:
                     System.out.println("Opcion no valida");
@@ -75,38 +83,61 @@ public class Principal {
 
         }
     }
+    @Transactional
+    public void buscarLibrosPorTitulo() {
+        System.out.println("Ingrese el nombre del libro que desea buscar");
+        opcionLibro = teclado.nextLine();
 
-        public void buscarLibrosPorTitulo(){
-            System.out.println("Ingrese el nombre del libro que desea buscar");
-            opcionLibro=teclado.nextLine();
+        var JsonBusqueda = consumoAPI.obtenerDatos(URL_BASE + "?search=" + opcionLibro.replace(" ", "+"));
+        var datosBusqueda = conversor.obtenerDatos(JsonBusqueda, DatosResultados.class);
 
-                var JsonBusqueda = consumoAPI.obtenerDatos(URL_BASE+"?search="+opcionLibro.replace(" ","+"));
-                var datosBusqueda = conversor.obtenerDatos(JsonBusqueda, DatosResultados.class);
-                    Optional<DatosLibro> libroBuscado = datosBusqueda.resultado().stream()
-                            .filter(l -> l.titulo().toUpperCase().contains(opcionLibro.toUpperCase()))
-                            .findFirst();
+        Optional<DatosLibro> libroBuscado = datosBusqueda.resultado().stream()
+                .filter(l -> l.titulo().toUpperCase().contains(opcionLibro.toUpperCase()))
+                .findFirst();
 
-                    if (libroBuscado.isPresent()) {
-                        Libro libro = new Libro(libroBuscado.get());
-                        Optional<Libro> libroExistente=libroRepository.findByTitulo(libroBuscado.get().titulo());
-
-                        if(libroExistente.isPresent()){
-                            System.out.println("El libro ya existe en la base de datos: ");
-                        }else {
-                            libroRepository.save(libro);
-                            System.out.println("Libro registrado"+libro.toString());
-                        }
-
-                    } else {
-                        System.out.println("El libro no existe");
-                    }
+        if (libroBuscado.isPresent()) {
+            Optional<Libro> libroExistente = libroRepository.findByTitulo(libroBuscado.get().titulo());
 
 
+            if (libroExistente.isPresent()) {
+                System.out.println("El libro ya existe en la base de datos: ");
+            } else {
+                Optional<Autor> autorExistente = autorRepository.findByNombre(libroBuscado.get().autor().get(0).nombre());
+                System.out.println(autorExistente);
+
+                Libro libro ;
+
+                if (autorExistente.isPresent()) {
+                    libro = new Libro(libroBuscado.get());
+                    libro.setAutor(autorExistente.get());
+                }else{
+                    Autor nuevoAutor = new Autor(libroBuscado.get().autor().get(0));
+                    libro = new Libro();
+                    autorRepository.save(nuevoAutor);
+                    libro.setAutor(nuevoAutor);
+                    libro.setTitulo(libroBuscado.get().titulo());
+                    libro.setIdiomas(libroBuscado.get().idiomas().toString());
+                    libro.setNumeroDeDescargas(libroBuscado.get().numeroDeDescargas());
+
+                    /*
+                    Autor autor = new Autor(libroBuscado.get().autor().get(0));
+                    l
+                */
+                }
 
 
-
+                libroRepository.save(libro); // Guardar el libro en la base de datos
+                System.out.println("Libro registrado: " + libro.toString());
+            }
+        } else {
+            System.out.println("El libro no existe");
         }
-        public void listarLibroRegistrados(){
+    }
+
+
+
+
+    public void listarLibroRegistrados(){
             libroRepository.findAll().forEach(System.out::println);
         }
         public void listarAutoresRegistrados(){

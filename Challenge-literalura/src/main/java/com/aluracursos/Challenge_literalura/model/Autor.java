@@ -6,12 +6,15 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.hibernate.internal.util.collections.ArrayHelper.forEach;
 
 @Entity
 @Table(name="autores")
 public class Autor {
-    @OneToOne(mappedBy = "autor")
-    private Libro libro;
+    @OneToMany(mappedBy = "autor",fetch = FetchType.EAGER)
+    private List<Libro> libro=new ArrayList<>();
     private String nombre;
     private Integer fechaDeNacimiento;
     private Integer fechaDeMuerte;
@@ -27,11 +30,14 @@ public class Autor {
 
     @Override
     public String toString() {
+        String libros = libro.stream()
+                .map(Libro::getTitulo)  // Accede solo al título de cada libro
+                .collect(Collectors.joining(", "));
         return  "----------------------\n"+
                 "Nombre= " + nombre+"\n"+
                 "Fecha de Nacimiento= "+fechaDeNacimiento+ "\n"+
                 "Fecha de Muerte= "+ fechaDeMuerte+ "\n"+
-                "Libro= " + libro.getTitulo()+"\n"+
+                "Libro= "+libros+"\n"+
                 "----------------------\n";
 
     }
@@ -64,11 +70,11 @@ public class Autor {
 
     }
 
-    public Libro getLibro() {
+    public List<Libro> getLibro() {
         return libro;
     }
 
-    public void setLibro(Libro libro) {
+    public void setLibro(List<Libro> libro) {
         this.libro = libro;
     }
 

@@ -3,6 +3,7 @@ package com.aluracursos.Challenge_literalura.repository;
 import com.aluracursos.Challenge_literalura.model.Autor;
 import com.aluracursos.Challenge_literalura.model.Libro;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,6 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     List<Libro> listarLibroPorIdioma(@Param("idioma") String idioma);
 
     Optional<Libro> findByTitulo(String titulo);
+
+
 }

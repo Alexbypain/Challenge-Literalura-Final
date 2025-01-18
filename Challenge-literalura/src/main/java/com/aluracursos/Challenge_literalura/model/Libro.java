@@ -17,8 +17,7 @@ public class Libro {
     @Column(unique=true)
     private String titulo;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name="autor_id")
+    @ManyToOne
     private Autor autor;
     private String idiomas;
     private Double numeroDeDescargas;
@@ -27,17 +26,18 @@ public class Libro {
 
     public Libro(DatosLibro datosLibro) {
         this.titulo= datosLibro.titulo();
-        this.idiomas= datosLibro.idiomas().get(0);
+        this.idiomas= datosLibro.idiomas().get(0).replace("[","").replace("]","");
         this.numeroDeDescargas= datosLibro.numeroDeDescargas();
-        if (!datosLibro.autor().isEmpty()) {
-            for (DatosAutor autor : datosLibro.autor()) {
-                this.autor = new Autor(autor);
-                break;
-            }
-        }
 
     }
 
+    public Libro(DatosLibro datosLibro, Autor autorExistente) {
+        this.titulo= datosLibro.titulo();
+        this.idiomas= datosLibro.idiomas().get(0);
+        this.numeroDeDescargas= datosLibro.numeroDeDescargas();
+        this.autor = autorExistente;
+
+    }
 
 
     @Override
